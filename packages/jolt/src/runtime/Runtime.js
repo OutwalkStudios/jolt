@@ -86,7 +86,11 @@ export class Runtime {
         const attributes = {};
 
         for (let attribute of component.attributes) {
-            attributes[attribute.localName] = attribute.value;
+            if (attribute.value === '') {
+                attributes[attribute.localName] = true;
+            } else {
+                attributes[attribute.localName] = attribute.value;
+            }
         }
 
         return attributes;
