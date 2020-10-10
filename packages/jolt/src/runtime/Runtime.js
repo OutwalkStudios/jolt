@@ -137,6 +137,8 @@ export class Runtime {
      * @param {HTMLElement} container 
      */
     static render(template, styles, container) {
+        if(!template) template = { source: "", events: [] };
+        
         if (styles) {
             template.source += `<style>${styles}</style>`;
         }
