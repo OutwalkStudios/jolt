@@ -34,7 +34,7 @@ declare abstract class Component<T extends State> extends HTMLElement {
     private connectedCallback(): void;
     private disconnectedCallback(): void;
 
-    abstract render(attribs?: Attributes): Template;
+    abstract render(attribs?: Attributes): Template | void;
 
     didLoad(): void;
     didUpdate(): void;

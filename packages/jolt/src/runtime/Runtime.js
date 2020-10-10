@@ -86,11 +86,8 @@ export class Runtime {
         const attributes = {};
 
         for (let attribute of component.attributes) {
-            if (attribute.value === "") {
-                attributes[attribute.localName] = true;
-            } else {
-                attributes[attribute.localName] = attribute.value;
-            }
+            const value = attribute.value;
+            attributes[attribute.localName] = (value != "") ? value : true;
         }
 
         return attributes;
@@ -140,6 +137,8 @@ export class Runtime {
      * @param {HTMLElement} container 
      */
     static render(template, styles, container) {
+        if(!template) template = { source: "", events: [] };
+        
         if (styles) {
             template.source += `<style>${styles}</style>`;
         }
