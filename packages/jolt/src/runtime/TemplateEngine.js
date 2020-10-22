@@ -1,11 +1,11 @@
 /**
  * @typedef {Object} Template
  * @param {string} source
- * @param {Array.<Function>} events
+ * @param {Object} data
  */
 
 /**
- * Templating Engine for components.
+ * TemplateEngine for components.
  * @class
  * @private
  */
@@ -13,75 +13,63 @@ export class TemplateEngine {
 
     /**
      * Creates a Template to be processed.
-     * @param {TemplateStringsArray} strings
+     * @param {TemplateStringsArray} strings 
      * @param {Array.<*>} values
      * @return {Template}
      */
     static createTemplate(strings, values) {
-        let events = [];
+        const data = { events: [] };
 
         /* piece together the template strings with the template values */
         let source = strings.reduce((combined, string, i) => {
-            let value = values[i];
-            if (value == undefined) value = "";
+            const value = (values[i] != undefined) ? values[i] : "";
 
-            /* if the string is an event, add an event marker and add the event to the events array */
+            /* if the string is an event, add an event marker and add the event to the data */
             if (string.match(/ on.*="?$/) && typeof value == "function") {
-                events.push(value);
+                data.events.push(value);
                 return combined + string + "{{e}}";
             }
 
-            /* if the string is an attribute assignment without quotes, add quotes to the assignment */
-            else if (string.match(/ .*=$/)) {
-                return combined + string + `"${value}"`;
-            }
-
-            /* if the value is a Template, combine the template with this Template */
+            /* if the value is a template, merge it with the this template */
             else if (TemplateEngine.isTemplate(value)) {
-                events = events.concat(value.events);
+                data.events.concat(value.data.events);
+                data.attribs = Object.assign(data.attribs, value.data.attribs);
                 return combined + string + value.source;
             }
 
-            /* if the value is an array of Templates, parse them into this Template */
+            /* if the value is an array of templates, merge them into this template */
             else if (TemplateEngine.isTemplateArray(value)) {
-                let html = "";
+                let source = "";
 
                 for (let fragment of value) {
-                    events = events.concat(fragment.events);
-                    html += fragment.source;
+                    data.events.concat(fragment.data.events);
+                    data.attribs = Object.assign(data.attribs, fragment.data.attribs);
+                    source += fragment.source;
                 }
 
-                return combined + string + html;
+                return combined + string + source;
             }
-
-            /* else add the string with its value to the Template */
+            /* else add the string with its value to the template */
             else {
                 return combined + string + value;
             }
-        }, "");
+        }, "").replace(/<([a-z]+-[a-z]+)([^/>]*)\/>/g, `<$1$2></$1>`);
 
-        const selfClosingRegex = /<([a-z]+-[a-z]+)([^/>]*)\/>/g;
-
-        /* if the source has a self closing web component, change it to a closing web component */
-        if (selfClosingRegex.test(source)) {
-            source = source.replace(selfClosingRegex, `<$1$2></$1>`);
-        }
-
-        return { source, events };
+        return { source, data };
     }
 
     /**
-     * Processes the Template into a usable DOM Tree.
+     * Processes the Template into a DOM Tree.
      * @param {Template} template
-     * @return {DocumentFragment}
+     * @return {DocumentFragment} 
      */
-    static processTemplate({ source, events }) {
+    static processTemplate({ source, data }) {
         const template = document.createElement("template");
         template.innerHTML = source;
 
+        const events = (data.events) ? data.events.length : 0;
 
-        /* if there are events to bind, walk through the template and bind the events */
-        if (events.length > 0) {
+        if (events > 0) {
             const walker = document.createTreeWalker(template.content, 1);
 
             let currentNode;
@@ -95,8 +83,9 @@ export class TemplateEngine {
                     for (let i = length; i >= 0; --i) {
                         const attribute = currentNode.attributes[i];
 
+                        /* if the attribute has an event marker then bind it as an event */
                         if (attribute.value == "{{e}}") {
-                            currentNode.addEventListener(attribute.localName.slice(2), events[index++]);
+                            currentNode.addEventListener(attribute.localName.slice(2), data.events[index++]);
                             currentNode.removeAttribute(attribute.localName);
                         }
                     }
@@ -108,29 +97,38 @@ export class TemplateEngine {
     }
 
     /**
-     * Determines if an object is a Template.
-     * @param {Object} value
-     * @return {boolean}
+     * Checks if an object is a template.
+     * @param {*} value
+     * @return {boolean} 
      */
     static isTemplate(value) {
-        return (typeof value == "object" && value.source && value.events);
+        return (
+            typeof value == "object" &&
+            value.source &&
+            value.data
+        );
     }
 
     /**
-     * Determines if an object is an array of Templates.
-     * @param {Object} value
-     * @return {boolean}
+     * Checks if an object is an array of templates.
+     * @param {*} value
+     * @param {boolean} 
      */
     static isTemplateArray(value) {
-        return (Array.isArray(value) && value[0] && value[0].source && value[0].events);
+        return (
+            Array.isArray(value) &&
+            value[0] &&
+            value[0].source &&
+            value[0].data
+        );
     }
 }
 
 /**
- * Creates a {@link Template} to be rendered.
+ * Creates a template to be rendered.
  * @param {TemplateStringsArray} strings 
  * @param  {...*} values
- * @return {Template}
+ * @param {Template}
  */
 export function html(strings, ...values) {
     return TemplateEngine.createTemplate(strings, values);
