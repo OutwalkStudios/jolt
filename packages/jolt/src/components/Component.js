@@ -1,7 +1,6 @@
 /* imports */
 import { Runtime } from "../runtime/Runtime";
 import { Reconciler } from "../runtime/Reconciler";
-import { html } from "../runtime/TemplateEngine";
 import { State } from "./State";
 
 /**
@@ -16,30 +15,28 @@ export class Component extends HTMLElement {
 
         /* load the component options */
         const { useShadow, styles } = Runtime.getComponentOptions(this.constructor);
-        this.styles = Runtime.createComponentStyle(styles);
 
-        /**
-         * The component attributes
-         * @type {Object.<string,string>}
-         */
-        this.attribs = Runtime.getComponentAttributes(this);
+        /* get the component style */
+        this.styles = Runtime.getComponentStyle(styles);
 
-        /** 
-         * The component render root
-         * @type {ShadowRoot|HTMLElement}
-         */
-        this.root = useShadow ? this.attachShadow({ mode: "open" }) : this;
+        /* get the component attribs */
+        this.constructor.attribs = Runtime.getComponentAttributes(this, (key, value) => {
+            if (this.shouldUpdate(key, value)) {
+                Runtime.render(this.render(this.constructor.attribs), this.styles, this.root);
+                this.didUpdate(key, value);
+            }
+        });
 
-        /**
-         * The component state
-         * @type {State}
-         */
+        /* create the component state */
         this.state = State.createState((key, value) => {
             if (this.shouldUpdate(key, value)) {
                 Runtime.render(this.render(this.attribs), this.styles, this.root);
                 this.didUpdate(key, value);
             }
         });
+
+        /* create the component root */
+        this.root = useShadow ? this.attachShadow({ mode: "open" }) : this;
     }
 
     /**
@@ -50,14 +47,8 @@ export class Component extends HTMLElement {
         Runtime.render(this.render(this.attribs), this.styles, this.root);
         this.didLoad();
 
-        /* observe the component attributes for changes */
-        this._observer = Runtime.getAttributeObserver(this, (key, value) => {
-            this.attribs[key] = value;
-
-            if (this.shouldUpdate(key, value)) {
-                Runtime.render(this.render(this.attribs), this.styles, this.root);
-                this.didUpdate(key, value);
-            }
+        this.observer = Runtime.getAttributeObserver(this, (key, value) => {
+            this.constructor.attribs[key] = value;
         });
     }
 
@@ -67,7 +58,7 @@ export class Component extends HTMLElement {
      */
     disconnectedCallback() {
         this.willUnload();
-        this._observer.disconnect();
+        this.observer.disconnect();
     }
 
     /**
@@ -131,7 +122,12 @@ export class Component extends HTMLElement {
      * @param {HTMLElement} container 
      */
     static mount(component, container) {
-        if (component.options) Reconciler.reconcile(html`<${component.options.name}></${component.options.name}>`, container);
+        if (component.options) {
+            Reconciler.reconcile({
+                source: `<${component.options.name}></${component.options.name}>`,
+                data: {}
+            }, container);
+        }
         else console.warn(`Jolt: Components must be registered before being used.`);
     }
 }
