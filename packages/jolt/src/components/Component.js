@@ -17,23 +17,25 @@ export class Component extends HTMLElement {
         const { useShadow, styles } = Runtime.getComponentOptions(this.constructor);
 
         /* get the component style */
-        this.styles = Runtime.getComponentStyle(styles);
+        this.styles = styles.join("");
 
         /* get the component attribs */
-        this.constructor.attribs = Runtime.getComponentAttributes(this, (key, value) => {
-            if (this.shouldUpdate(key, value)) {
-                Runtime.render(this.render(this.constructor.attribs), this.styles, this.root);
-                this.didUpdate(key, value);
-            }
-        });
+        this.attribs = Runtime.getComponentAttributes(this);
 
-        /* create the component state */
-        this.state = State.createState((key, value) => {
+        /* create a function to run when an update occurs */
+        const updateCallback = (key, value) => {
             if (this.shouldUpdate(key, value)) {
+                this.attribs[key] = value;
                 Runtime.render(this.render(this.attribs), this.styles, this.root);
                 this.didUpdate(key, value);
             }
-        });
+        };
+
+        /* create the attribute observer */
+        this.observer = Runtime.getAttributeObserver(this, updateCallback);
+
+        /* create the component state */
+        this.state = State.createState(updateCallback);
 
         /* create the component root */
         this.root = useShadow ? this.attachShadow({ mode: "open" }) : this;
@@ -46,10 +48,6 @@ export class Component extends HTMLElement {
     connectedCallback() {
         Runtime.render(this.render(this.attribs), this.styles, this.root);
         this.didLoad();
-
-        this.observer = Runtime.getAttributeObserver(this, (key, value) => {
-            this.constructor.attribs[key] = value;
-        });
     }
 
     /**
@@ -123,10 +121,13 @@ export class Component extends HTMLElement {
      */
     static mount(component, container) {
         if (component.options) {
+            const name = component.options.name;
+
             Reconciler.reconcile({
-                source: `<${component.options.name}></${component.options.name}>`,
-                data: {}
+                source: `<${name}></${name}>`,
+                data: []
             }, container);
+
         }
         else console.warn(`Jolt: Components must be registered before being used.`);
     }

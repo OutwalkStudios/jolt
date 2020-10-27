@@ -20,21 +20,21 @@ declare interface ComponentOptions {
 
 declare interface Template {
     source: string;
-    events: Array<Function>
+    data: Array<any>
 }
 
-declare abstract class Component<T extends State> extends HTMLElement {
+declare abstract class Component<A = {}, T extends State = {}> extends HTMLElement {
 
-    private _observer: MutationObserver;
+    private observer: MutationObserver;
 
-    attribs: Attributes;
-    root: ShadowRoot|HTMLElement;
-    state: T
+    attribs: A;
+    state: T;
+    root: ShadowRoot | HTMLElement;
 
     private connectedCallback(): void;
     private disconnectedCallback(): void;
 
-    abstract render(attribs?: Attributes): Template | void;
+    abstract render(attribs?: A): Template | void;
 
     didLoad(): void;
     didUpdate(): void;

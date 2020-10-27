@@ -15,12 +15,12 @@ import { Reconciler } from "./Reconciler";
  * @param {string} [value]
  */
 
- /**
-  * Attribute Callback
-  * @callback AttributeCallback
-  * @param {string} [key]
-  * @param {string} [value]
-  */
+/**
+ * Attribute Callback
+ * @callback AttributeCallback
+ * @param {string} [key]
+ * @param {string} [value]
+ */
 
 /**
  * Component Runtime
@@ -44,11 +44,15 @@ export class Runtime {
                 const { useShadow, styles } = Runtime.getComponentOptions(component);
 
                 /* get the component style */
-                this.styles = Runtime.getComponentStyle(styles);
+                this.styles = styles.join("");
 
                 /* get the component attribs */
-                this.constructor.attribs = Runtime.getComponentAttributes(this, () => {
-                    Runtime.render(component(this.constructor.attribs), this.styles, this.root);
+                this.attribs = Runtime.getComponentAttributes(this);
+
+                /* create the attribute observer */
+                this.observer = Runtime.getAttributeObserver(this, (key, value) => {
+                    this.attribs[key] = value;
+                    Runtime.render(component(this.attribs), this.styles, this.root);
                 });
 
                 /* create the component root */
@@ -56,11 +60,7 @@ export class Runtime {
             }
 
             connectedCallback() {
-                Runtime.render(component(this.constructor.attribs), this.styles, this.root);
-
-                this.observer = Runtime.getAttributeObserver(this, (key, value) => {
-                    this.constructor.attribs[key] = value;
-                });
+                Runtime.render(component(this.attribs), this.styles, this.root);
             }
 
             disconnectedCallback() {
@@ -84,37 +84,14 @@ export class Runtime {
         };
     }
 
-    static getComponentStyle(styles) {
-        let style = "";
-
-        for (let sheet of styles) {
-            style += sheet;
-        }
-
-        return style;
-    }
-
     /**
      * Gets the component attributes as a proxy object.
      * @param {CustomElementConstructor|Function} component 
      * @param {AttributeCallback} callback
      * @return {Object.<string, *>}
      */
-    static getComponentAttributes(component, callback) {
-        const attributes = new Proxy({}, {
-            set: (target, key, value) => {
-                if (key == "prototype" || target[key] == value) return true;
-
-                if (target[key] != undefined) {
-                    target[key] = value;
-                    callback(key, value);
-                    return true;
-                }
-
-                target[key] = value;
-                return true;
-            }
-        });
+    static getComponentAttributes(component) {
+        const attributes = {};
 
         for (let attribute of component.attributes) {
             const value = attribute.value;
@@ -150,7 +127,7 @@ export class Runtime {
      * @param {HTMLElement} container
      */
     static render(template, styles, container) {
-        if (!template) template = { source: "", data: {} }
+        if (!template) template = { source: "", data: [] }
 
         if (styles.length > 0) {
             template.source += `<style>${styles}</style>`;

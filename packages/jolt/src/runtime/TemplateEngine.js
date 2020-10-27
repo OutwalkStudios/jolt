@@ -18,22 +18,21 @@ export class TemplateEngine {
      * @return {Template}
      */
     static createTemplate(strings, values) {
-        const data = { events: [] };
+        const data = [];
 
         /* piece together the template strings with the template values */
         let source = strings.reduce((combined, string, i) => {
             const value = (values[i] != undefined) ? values[i] : "";
 
             /* if the string is an event, add an event marker and add the event to the data */
-            if (string.match(/ on.*="?$/) && typeof value == "function") {
-                data.events.push(value);
+            if (string.match(/ on[a-z]*="?$/) && typeof value == "function") {
+                data.push(value);
                 return combined + string + "{{e}}";
             }
 
             /* if the value is a template, merge it with the this template */
             else if (TemplateEngine.isTemplate(value)) {
-                data.events.concat(value.data.events);
-                data.attribs = Object.assign(data.attribs, value.data.attribs);
+                data.concat(value.data);
                 return combined + string + value.source;
             }
 
@@ -42,8 +41,7 @@ export class TemplateEngine {
                 let source = "";
 
                 for (let fragment of value) {
-                    data.events.concat(fragment.data.events);
-                    data.attribs = Object.assign(data.attribs, fragment.data.attribs);
+                    data.concat(fragment.data);
                     source += fragment.source;
                 }
 
@@ -67,9 +65,7 @@ export class TemplateEngine {
         const template = document.createElement("template");
         template.innerHTML = source;
 
-        const events = (data.events) ? data.events.length : 0;
-
-        if (events > 0) {
+        if (data.length > 0) {
             const walker = document.createTreeWalker(template.content, 1);
 
             let currentNode;
@@ -85,7 +81,7 @@ export class TemplateEngine {
 
                         /* if the attribute has an event marker then bind it as an event */
                         if (attribute.value == "{{e}}") {
-                            currentNode.addEventListener(attribute.localName.slice(2), data.events[index++]);
+                            currentNode.addEventListener(attribute.localName.slice(2), data[index++]);
                             currentNode.removeAttribute(attribute.localName);
                         }
                     }
