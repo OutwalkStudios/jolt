@@ -16,11 +16,11 @@ export class Reconciler {
     static reconcile(template, container) {
         const templateNode = TemplateEngine.processTemplate(template);
 
-        if (container.childElementCount > 0 || template.data.length > 0) {
+        if(container.childElementCount > 0) {
             Reconciler.diff(templateNode, container);
             Reconciler.diffChildren(templateNode, container);
         } else {
-            container.appendChild(document.importNode(templateNode, true));
+            container.appendChild(templateNode);
         }
     }
 

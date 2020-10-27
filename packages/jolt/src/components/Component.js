@@ -23,19 +23,21 @@ export class Component extends HTMLElement {
         this.attribs = Runtime.getComponentAttributes(this);
 
         /* create a function to run when an update occurs */
-        const updateCallback = (key, value) => {
-            if (this.shouldUpdate(key, value)) {
-                this.attribs[key] = value;
-                Runtime.render(this.render(this.attribs), this.styles, this.root);
-                this.didUpdate(key, value);
-            }
+        const updateCallback = (updateAttribs = false) => {
+            return (key, value) => {
+                if (this.shouldUpdate(key, value)) {
+                    if (updateAttribs) this.attribs[key] = value;
+                    Runtime.render(this.render(this.attribs), this.styles, this.root);
+                    this.didUpdate(key, value);
+                }
+            };
         };
 
         /* create the attribute observer */
-        this.observer = Runtime.getAttributeObserver(this, updateCallback);
+        this.observer = Runtime.getAttributeObserver(this, updateCallback(true));
 
         /* create the component state */
-        this.state = State.createState(updateCallback);
+        this.state = State.createState(updateCallback());
 
         /* create the component root */
         this.root = useShadow ? this.attachShadow({ mode: "open" }) : this;

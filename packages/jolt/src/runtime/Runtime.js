@@ -66,7 +66,7 @@ export class Runtime {
             disconnectedCallback() {
                 this.observer.disconnect();
             }
-        }
+        };
     }
 
     /**
@@ -127,7 +127,7 @@ export class Runtime {
      * @param {HTMLElement} container
      */
     static render(template, styles, container) {
-        if (!template) template = { source: "", data: [] }
+        if (!template) template = { source: "", data: [] };
 
         if (styles.length > 0) {
             template.source += `<style>${styles}</style>`;
