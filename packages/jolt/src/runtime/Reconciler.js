@@ -15,8 +15,13 @@ export class Reconciler {
      */
     static reconcile(template, container) {
         const templateNode = TemplateEngine.processTemplate(template);
-        Reconciler.diff(templateNode, container);
-        Reconciler.diffChildren(templateNode, container);
+
+        if(container.childElementCount > 0) {
+            Reconciler.diff(templateNode, container);
+            Reconciler.diffChildren(templateNode, container);
+        } else {
+            container.appendChild(templateNode);
+        }
     }
 
     /**
@@ -33,7 +38,7 @@ export class Reconciler {
             Reconciler.diff(newNode, oldNode);
 
             /* if the element is a component, we dont need to diff its children */
-            if (newNode.tagName && !newNode.tagName.includes("-")) Reconciler.diffChildren(newNode, oldNode);
+            if (!Reconciler.isComponent(newNode)) Reconciler.diffChildren(newNode, oldNode);
 
             return oldNode;
         }
@@ -262,5 +267,14 @@ export class Reconciler {
         if (a.tagName != b.tagName) return false;
         if (a.nodeType == 3) return (a.nodeValue == b.nodeValue);
         return false;
+    }
+
+    /**
+     * Determines if a node is a Web Component or not.
+     * @param {Node} node
+     * @return {boolean}
+     */
+    static isComponent(node) {
+        return (node.tagName && node.tagName.includes("-"));
     }
 }

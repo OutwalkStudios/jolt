@@ -16,16 +16,23 @@ import { Reconciler } from "./Reconciler";
  */
 
 /**
- * Component Runtime, used to power the component internals.
+ * Attribute Callback
+ * @callback AttributeCallback
+ * @param {string} [key]
+ * @param {string} [value]
+ */
+
+/**
+ * Component Runtime
  * @class
  * @private
  */
 export class Runtime {
 
     /**
-     * Wraps a Function Component into a WebComponent class.
-     * @param {Function} component
-     * @return {CustomElementConstructor} 
+     * Wraps a Function Component into a Web Component.
+     * @param {Function} component 
+     * @return {CustomElementConstructor}
      */
     static wrapFunction(component) {
         return class extends HTMLElement {
@@ -35,52 +42,53 @@ export class Runtime {
 
                 /* load the component options */
                 const { useShadow, styles } = Runtime.getComponentOptions(component);
-                this.styles = Runtime.createComponentStyle(styles);
 
-                /**
-                 * The component attributes
-                 * @type {Object.<string,string>}
-                 */
+                /* get the component style */
+                this.styles = styles.join("");
+
+                /* get the component attribs */
                 this.attribs = Runtime.getComponentAttributes(this);
 
-                /** 
-                 * The component render root
-                 * @type {ShadowRoot|HTMLElement}
-                 */
+                /* create the attribute observer */
+                this.observer = Runtime.getAttributeObserver(this, (key, value) => {
+                    this.attribs[key] = value;
+                    Runtime.render(component(this.attribs), this.styles, this.root);
+                });
+
+                /* create the component root */
                 this.root = useShadow ? this.attachShadow({ mode: "open" }) : this;
             }
 
             connectedCallback() {
                 Runtime.render(component(this.attribs), this.styles, this.root);
-
-                this._observer = Runtime.getAttributeObserver(this, (key, value) => {
-                    this.attribs[key] = value;
-                    Runtime.render(component(this.attribs), this.styles, this.root);
-                });
             }
 
             disconnectedCallback() {
-                this._observer.disconnect();
+                this.observer.disconnect();
             }
         };
     }
 
     /**
-     * Gets the component options.
+     * Gets the options for the component.
      * @param {CustomElementConstructor|Function} component
      * @return {ComponentOptions}
      */
     static getComponentOptions(component) {
+        const styles = component.options.styles;
+        const useShadow = component.options.useShadow;
+
         return {
-            styles: component.options.styles,
-            useShadow: (component.options.useShadow != undefined) ? component.options.useShadow : true
+            styles: (styles != undefined) ? styles : [],
+            useShadow: (useShadow != undefined) ? useShadow : true
         };
     }
 
     /**
-     * Gets the component attributes.
-     * @param {CustomElementConstructor|Function} component
-     * @return {Object.<string,string>}
+     * Gets the component attributes as a proxy object.
+     * @param {CustomElementConstructor|Function} component 
+     * @param {AttributeCallback} callback
+     * @return {Object.<string, *>}
      */
     static getComponentAttributes(component) {
         const attributes = {};
@@ -94,10 +102,9 @@ export class Runtime {
     }
 
     /**
-     * Observes an elements attributes for changes.
+     * Gets a MutationObserver to watch for attribute changes.
      * @param {HTMLElement} element 
-     * @param {ObserverCallback} callback
-     * @return {MutationObserver}
+     * @param {MutationObserver} callback 
      */
     static getAttributeObserver(element, callback) {
         const observer = new MutationObserver((mutations) => {
@@ -114,32 +121,15 @@ export class Runtime {
     }
 
     /**
-     * Creates the component stylesheet
-     * @param {Array.<string>} styles
-     * @return {string}
-     */
-    static createComponentStyle(styles) {
-        if (!styles) return null;
-
-        let style = "";
-
-        for (let sheet of styles) {
-            style += sheet;
-        }
-
-        return style;
-    }
-
-    /**
-     * Render the component
+     * Renders the component
      * @param {Template} template 
      * @param {string} styles 
-     * @param {HTMLElement} container 
+     * @param {HTMLElement} container
      */
     static render(template, styles, container) {
-        if(!template) template = { source: "", events: [] };
-        
-        if (styles) {
+        if (!template) template = { source: "", data: [] };
+
+        if (styles.length > 0) {
             template.source += `<style>${styles}</style>`;
         }
 
