@@ -1,6 +1,6 @@
 {
     "name": "@jolt/toolchain-javascript",
-    "version": "5.0.5",
+    "version": "5.0.6",
     "publishConfig": {
         "access": "public"
     },
