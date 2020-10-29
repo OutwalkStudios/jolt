@@ -1,6 +1,6 @@
 {
     "name": "@jolt/cli",
-    "version": "5.1.1",
+    "version": "5.1.2",
     "publishConfig": {
         "access": "public"
     },
@@ -37,9 +37,9 @@
     "author": "Outwalk Studios <support@outwalkstudios.com> (https://www.outwalkstudios.com/)",
     "license": "MIT",
     "devDependencies": {
-        "@babel/core": "^7.12.3",
-        "@babel/plugin-proposal-class-properties": "^7.12.1",
-        "@babel/preset-env": "^7.12.1",
+        "@babel/core": "^7.11.6",
+        "@babel/plugin-proposal-class-properties": "^7.10.4",
+        "@babel/preset-env": "^7.11.5",
         "@rollup/plugin-babel": "^5.2.1",
         "@rollup/plugin-json": "^4.1.0",
         "babel-eslint": "^10.1.0",
