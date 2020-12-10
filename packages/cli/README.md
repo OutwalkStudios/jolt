@@ -4,7 +4,6 @@ A CLI tool for Jolt development
 
 ![Actions](https://github.com/OutwalkStudios/jolt/workflows/build/badge.svg)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/OutwalkStudios/jolt/blob/master/LICENSE)
-[![Chat Server](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/jMQHZkG)
 [![Donate](https://img.shields.io/badge/patreon-donate-green.svg)](https://www.patreon.com/outwalkstudios)
 [![Follow Us](https://img.shields.io/badge/follow-on%20twitter-4AA1EC.svg)](https://twitter.com/OutwalkStudios)
 

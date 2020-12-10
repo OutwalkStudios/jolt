@@ -10,6 +10,6 @@
     "deploy": "pnpm -r publish"
   },
   "devDependencies": {
-    "pnpm": "^5.10.2"
+    "pnpm": "^5.13.5"
   }
 }

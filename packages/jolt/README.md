@@ -11,9 +11,6 @@
     <a href="https://github.com/OutwalkStudios/jolt/blob/master/LICENSE">
         <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="Jolt is released under the MIT license">
     </a>
-    <a href="https://discord.gg/jMQHZkG">
-        <img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg" alt="Join us on Discord">
-    </a>
     <a href="https://www.patreon.com/outwalkstudios">
         <img src="https://img.shields.io/badge/patreon-donate-green.svg" alt="Donate on Patreon">
     </a>
